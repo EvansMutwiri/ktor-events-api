@@ -44,7 +44,7 @@ fun Application.configureRouting() {
             call.respond(events)
         }
 
-        post("/create_event") {
+        post("/events") {
             val request = call.receive<EventsRequest>()
             val result = db.insert(EventEntity) {
                 set(it.name, request.name)
