@@ -10,16 +10,15 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import org.ktorm.dsl.from
-import org.ktorm.dsl.insert
-import org.ktorm.dsl.map
-import org.ktorm.dsl.select
+import org.ktorm.dsl.*
 
 fun Application.configureRouting() {
 
     val db = DatabaseConnection.database
 
     routing {
+
+        //get all events
         get("/events") {
 //            call.respondText("return all events")
 
@@ -44,6 +43,38 @@ fun Application.configureRouting() {
             call.respond(events)
         }
 
+        //get event by id
+        get("/events/{id}") {
+            val ide = call.parameters["id"]?.toInt() ?: -1
+            val event = db.from(EventEntity).select().where { EventEntity.id eq ide }.map {
+                val id = it[EventEntity.id]!!
+                val name = it[EventEntity.name]!!
+                val description = it[EventEntity.description]!!
+                val poster = it[EventEntity.poster]!!
+                val price = it[EventEntity.price]!!
+
+                EventItem(
+                    id = id,
+                    description = description,
+                    name = name,
+                    poster = poster,
+                    price = price)
+            }.firstOrNull()
+
+            if (event == null) {
+                call.respond(HttpStatusCode.BadRequest, EventResponse(
+                    success = false,
+                    data = "Could not find event with id $ide"
+                ))
+            } else {
+                call.respond(HttpStatusCode.OK, EventResponse(
+                    success = true,
+                    data = event
+                ))
+            }
+        }
+
+        //create new event
         post("/events") {
             val request = call.receive<EventsRequest>()
             val result = db.insert(EventEntity) {
