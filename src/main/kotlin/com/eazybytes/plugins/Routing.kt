@@ -99,6 +99,8 @@ fun Application.configureRouting() {
             }
         }
 
+        //edit event
+
         put("/events/{id}") {
             val ide = call.parameters["id"]?.toInt() ?: -1
             val updatedEvent = call.receive<EventsRequest>()
@@ -123,6 +125,26 @@ fun Application.configureRouting() {
                     HttpStatusCode.BadRequest,
                     EventResponse(success = false, data = "Event update failed")
                 )
+            }
+        }
+
+        //delete event
+
+        delete("/events/{id}") {
+            val ide = call.parameters["id"]?.toInt() ?: -1
+            val rowsAffected = db.delete(EventEntity) {
+                it.id eq ide
+            }
+            if(rowsAffected == 1) {
+                call.respond(HttpStatusCode.OK, EventResponse(
+                    data = "Event deleted successfully",
+                    success = true
+                ))
+            } else {
+                call.respond(HttpStatusCode.BadRequest, EventResponse(
+                    data = "Event delete Failed",
+                    success = false
+                ))
             }
         }
     }
