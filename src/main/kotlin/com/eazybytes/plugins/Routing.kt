@@ -98,6 +98,33 @@ fun Application.configureRouting() {
                 ))
             }
         }
+
+        put("/events/{id}") {
+            val ide = call.parameters["id"]?.toInt() ?: -1
+            val updatedEvent = call.receive<EventsRequest>()
+
+            val rowsAffected = db.update(EventEntity) {
+                set(it.poster, updatedEvent.poster)
+                set(it.name, updatedEvent.name)
+                set(it.description, updatedEvent.description)
+                set(it.price, updatedEvent.price)
+
+                where {
+                    it.id eq ide
+                }
+            }
+            if (rowsAffected == 1)
+                call.respond(
+                    HttpStatusCode.OK,
+                    EventResponse(success = true, data = "Event successfully updated")
+                )
+            else {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    EventResponse(success = false, data = "Event update failed")
+                )
+            }
+        }
     }
 }
 
