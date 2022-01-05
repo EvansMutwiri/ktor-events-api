@@ -1,5 +1,6 @@
 package com.eazybytes
 
+import com.eazybytes.plugins.configureAuthentication
 import com.eazybytes.plugins.configureRouting
 import com.eazybytes.plugins.configureSerialization
 import io.ktor.server.engine.*
@@ -9,6 +10,7 @@ fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         configureRouting()
         configureSerialization()
+        configureAuthentication()
 
 //        //delete
 //        database.delete(EventEntity) {
