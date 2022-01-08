@@ -5,7 +5,10 @@ import com.eazybytes.entities.db.DatabaseConnection
 import com.eazybytes.models.EventResponse
 import com.eazybytes.models.User.User
 import com.eazybytes.models.UserInfo
+import com.eazybytes.utils.TokenManager
+import com.typesafe.config.ConfigFactory
 import io.ktor.application.*
+import io.ktor.config.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -15,6 +18,7 @@ import org.mindrot.jbcrypt.BCrypt
 
 fun Application.configureAuthentication() {
     val db = DatabaseConnection.database
+    val tokenManager = TokenManager(HoconApplicationConfig(ConfigFactory.load()))
     routing {
         post("/register") {
             val userInfo = call.receive<UserInfo>()
@@ -92,7 +96,7 @@ fun Application.configureAuthentication() {
                 ))
                 return@post
             }
-            val passwordMatch = BCrypt.checkpw(password, user?.password)
+            val passwordMatch = BCrypt.checkpw(password, user.password)
             if (!passwordMatch) {
                 call.respond(HttpStatusCode.BadRequest, EventResponse(
                     data = "Username or password invalid",
@@ -100,9 +104,10 @@ fun Application.configureAuthentication() {
                 ))
                 return@post
             }
+            val token = tokenManager.generateToken(user)
 
             call.respond(HttpStatusCode.OK, EventResponse(
-                data = "Successfully logged in",
+                data = token,
                 success = true
             ))
         }

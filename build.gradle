@@ -24,4 +24,7 @@ dependencies {
     implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.27'
     // https://mvnrepository.com/artifact/org.mindrot/jbcrypt
     implementation group: 'org.mindrot', name: 'jbcrypt', version: '0.4'
+
+    implementation "io.ktor:ktor-auth:$ktor_version"
+    implementation "io.ktor:ktor-auth-jwt:$ktor_version"
 }
