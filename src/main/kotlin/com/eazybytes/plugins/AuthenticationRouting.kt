@@ -3,6 +3,7 @@ package com.eazybytes.plugins
 import com.eazybytes.entities.UserEntity
 import com.eazybytes.entities.db.DatabaseConnection
 import com.eazybytes.models.EventResponse
+import com.eazybytes.models.User.User
 import com.eazybytes.models.UserInfo
 import io.ktor.application.*
 import io.ktor.http.*
@@ -10,10 +11,10 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.ktorm.dsl.*
+import org.mindrot.jbcrypt.BCrypt
 
 fun Application.configureAuthentication() {
     val db = DatabaseConnection.database
-
     routing {
         post("/register") {
             val userInfo = call.receive<UserInfo>()
@@ -54,6 +55,56 @@ fun Application.configureAuthentication() {
                     success = true
                 ))
             }
+        }
+
+        post("/login") {
+            val userInfo = call.receive<UserInfo>()
+
+            if (!userInfo.isValidCredentials()) {
+                call.respond(
+                    HttpStatusCode.BadRequest, EventResponse(
+                        data = "Invalid credentials.",
+                        success = false
+                    )
+                )
+                return@post
+            }
+            val username = userInfo.username.lowercase()
+
+            //use password from body
+            val password = userInfo.password
+
+            //check if user exists
+            val user = db.from(UserEntity)
+                .select()
+                .where { UserEntity.username eq username }
+                .map {
+                    val id = it[UserEntity.id]!!
+                    val lusername = it[UserEntity.id]!!
+                    val lpassword = it[UserEntity.password]!!
+                    User(id, lusername, lpassword)
+                }.firstOrNull()
+
+            if (user == null) {
+                call.respond(HttpStatusCode.BadRequest, EventResponse(
+                    data = "Username does not exist",
+                    success = false
+                ))
+                return@post
+            }
+            val passwordMatch = BCrypt.checkpw(password, user?.password)
+            if (!passwordMatch) {
+                call.respond(HttpStatusCode.BadRequest, EventResponse(
+                    data = "Username or password invalid",
+                    success = false
+                ))
+                return@post
+            }
+
+            call.respond(HttpStatusCode.OK, EventResponse(
+                data = "Successfully logged in",
+                success = true
+            ))
         }
     }
 }
