@@ -3,3 +3,4 @@
 /build/
 
 DatabaseConnection.kt
+application.conf

@@ -3,6 +3,7 @@ package com.eazybytes
 import com.eazybytes.plugins.configureAuthentication
 import com.eazybytes.plugins.configureRouting
 import com.eazybytes.plugins.configureSerialization
+import com.eazybytes.plugins.jwtAuth
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 
@@ -11,6 +12,7 @@ fun main() {
         configureRouting()
         configureSerialization()
         configureAuthentication()
+        jwtAuth()
 
 //        //delete
 //        database.delete(EventEntity) {
