@@ -6,6 +6,7 @@ import com.eazybytes.models.EventItem
 import com.eazybytes.models.EventResponse
 import com.eazybytes.models.EventsRequest
 import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -75,76 +76,74 @@ fun Application.configureRouting() {
         }
 
         //create new event
-        post("/events") {
-            val request = call.receive<EventsRequest>()
-            val result = db.insert(EventEntity) {
-                set(it.name, request.name)
-                set(it.description, request.description)
-                set(it.price, request.price)
-                set(it.poster, request.poster)
-            }
-            if (result == 1) {
-                //success response
-                call.respond(HttpStatusCode.OK, EventResponse(
-                    success = true,
-                    data = "Successfully inserted"
-                ))
+        authenticate {
+            post("/events") {
+                val request = call.receive<EventsRequest>()
+                val result = db.insert(EventEntity) {
+                    set(it.name, request.name)
+                    set(it.description, request.description)
+                    set(it.price, request.price)
+                    set(it.poster, request.poster)
+                }
+                if (result == 1) {
+                    //success response
+                    call.respond(HttpStatusCode.OK, EventResponse(
+                        success = true,
+                        data = "Successfully inserted"
+                    ))
 
-            } else {
-                //send failure message
-                call.respond(HttpStatusCode.BadRequest, EventResponse(
-                    success = false,
-                    data = "Something went wrong. Failed"
-                ))
-            }
-        }
-
-        //edit event
-
-        put("/events/{id}") {
-            val ide = call.parameters["id"]?.toInt() ?: -1
-            val updatedEvent = call.receive<EventsRequest>()
-
-            val rowsAffected = db.update(EventEntity) {
-                set(it.poster, updatedEvent.poster)
-                set(it.name, updatedEvent.name)
-                set(it.description, updatedEvent.description)
-                set(it.price, updatedEvent.price)
-
-                where {
-                    it.id eq ide
+                } else {
+                    //send failure message
+                    call.respond(HttpStatusCode.BadRequest, EventResponse(
+                        success = false,
+                        data = "Something went wrong. Failed"
+                    ))
                 }
             }
-            if (rowsAffected == 1)
-                call.respond(
-                    HttpStatusCode.OK,
-                    EventResponse(success = true, data = "Event successfully updated")
-                )
-            else {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    EventResponse(success = false, data = "Event update failed")
-                )
-            }
-        }
+            //edit event
+            put("/events/{id}") {
+                val ide = call.parameters["id"]?.toInt() ?: -1
+                val updatedEvent = call.receive<EventsRequest>()
 
-        //delete event
+                val rowsAffected = db.update(EventEntity) {
+                    set(it.poster, updatedEvent.poster)
+                    set(it.name, updatedEvent.name)
+                    set(it.description, updatedEvent.description)
+                    set(it.price, updatedEvent.price)
 
-        delete("/events/{id}") {
-            val ide = call.parameters["id"]?.toInt() ?: -1
-            val rowsAffected = db.delete(EventEntity) {
-                it.id eq ide
+                    where {
+                        it.id eq ide
+                    }
+                }
+                if (rowsAffected == 1)
+                    call.respond(
+                        HttpStatusCode.OK,
+                        EventResponse(success = true, data = "Event successfully updated")
+                    )
+                else {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        EventResponse(success = false, data = "Event update failed")
+                    )
+                }
             }
-            if(rowsAffected == 1) {
-                call.respond(HttpStatusCode.OK, EventResponse(
-                    data = "Event deleted successfully",
-                    success = true
-                ))
-            } else {
-                call.respond(HttpStatusCode.BadRequest, EventResponse(
-                    data = "Event delete Failed",
-                    success = false
-                ))
+            //delete event
+            delete("/events/{id}") {
+                val ide = call.parameters["id"]?.toInt() ?: -1
+                val rowsAffected = db.delete(EventEntity) {
+                    it.id eq ide
+                }
+                if(rowsAffected == 1) {
+                    call.respond(HttpStatusCode.OK, EventResponse(
+                        data = "Event deleted successfully",
+                        success = true
+                    ))
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, EventResponse(
+                        data = "Event delete Failed",
+                        success = false
+                    ))
+                }
             }
         }
     }

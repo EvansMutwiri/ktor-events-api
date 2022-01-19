@@ -8,6 +8,8 @@ import com.eazybytes.models.UserInfo
 import com.eazybytes.utils.TokenManager
 import com.typesafe.config.ConfigFactory
 import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.auth.jwt.*
 import io.ktor.config.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -84,9 +86,9 @@ fun Application.configureAuthentication() {
                 .where { UserEntity.username eq username }
                 .map {
                     val id = it[UserEntity.id]!!
-                    val lusername = it[UserEntity.id]!!
-                    val lpassword = it[UserEntity.password]!!
-                    User(id, lusername, lpassword)
+                    val username = it[UserEntity.username]!!
+                    val password = it[UserEntity.password]!!
+                    User(id, username, password)
                 }.firstOrNull()
 
             if (user == null) {
@@ -110,6 +112,16 @@ fun Application.configureAuthentication() {
                 data = token,
                 success = true
             ))
+        }
+
+        authenticate {
+            get("/me") {
+                val principal = call.principal<JWTPrincipal>()
+                val username = principal!!.payload.getClaim("username").asString()
+                val userId = principal.payload.getClaim("userId").asInt()
+
+                call.respond("Hello $username with id: $userId")
+            }
         }
     }
 }
